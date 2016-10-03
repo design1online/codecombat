@@ -8,16 +8,15 @@ crypto = require 'crypto'
 ClientSchema = new mongoose.Schema(body: String, {strict: false,read:config.mongo.readpref})
 
 ClientSchema.statics.jsonSchema = jsonSchema
-ClientSchema.statics.editableProperties = [
-  'name'
-]
 
 ClientSchema.methods.generateNewSecret = ->
   secret = _.times(40, -> (_.random(0,Math.pow(2,4)-1)).toString(16)).join('') # 40 hex character string
-  shasum = crypto.createHash('sha512').update(config.salt + secret)
-  hashed = shasum.digest('hex')
-  @set('secret', hashed)
+  @set('secret', Client.hash(secret))
   return secret
+  
+ClientSchema.statics.hash = (secret) ->
+  shasum = crypto.createHash('sha512').update(config.salt + secret)
+  return shasum.digest('hex')
 
 ClientSchema.statics.postEditableProperties = []
 
@@ -30,4 +29,4 @@ ClientSchema.set('toObject', {
     return ret
 })
 
-module.exports = mongoose.model('client', ClientSchema)
+module.exports = Client = mongoose.model('Client', ClientSchema)

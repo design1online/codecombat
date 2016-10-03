@@ -1,5 +1,6 @@
 module.exports =
   achievements: require './achievements'
+  api: require './api'
   auth: require './auth'
   classrooms: require './classrooms'
   clients: require './clients'
