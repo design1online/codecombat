@@ -121,7 +121,7 @@ module.exports =
 
 
   assignBody: (req, doc, options={}) ->
-    if _.isEmpty(req.body)
+    if not req.body
       throw new errors.UnprocessableEntity('No input')
       
     if not doc.schema.statics.editableProperties
@@ -149,7 +149,7 @@ module.exports =
 
 
   validateDoc: (doc) ->
-    obj = doc.toObject()
+    obj = doc.toObject({req:false})
     # Hack to get saving of Users to work. Probably should replace these props with strings
     # so that validation doesn't get hung up on Date objects in the documents.
     delete obj.dateCreated

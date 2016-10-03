@@ -2,6 +2,7 @@ module.exports =
   achievements: require './achievements'
   auth: require './auth'
   classrooms: require './classrooms'
+  clients: require './clients'
   campaigns: require './campaigns'
   codelogs: require './codelogs'
   contact: require './contact'

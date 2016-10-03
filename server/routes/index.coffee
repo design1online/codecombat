@@ -79,6 +79,10 @@ module.exports.setup = (app) ->
   app.get('/db/classroom/:handle', mw.auth.checkLoggedIn()) # TODO: Finish migrating route, adding now so 401 is returned
   app.get('/db/classroom/-/playtimes', mw.auth.checkHasPermission(['admin']), mw.classrooms.fetchPlaytimes)
   app.get('/db/classroom/-/users', mw.auth.checkHasPermission(['admin']), mw.classrooms.getUsers)
+  
+  Client = require ('../models/Client')
+  app.post('/db/clients', mw.auth.checkHasPermission(['admin']), mw.rest.post(Client))
+  app.post('/db/clients/:handle/new-secret', mw.auth.checkHasPermission(['admin']), mw.clients.newSecret)
 
   CodeLog = require ('../models/CodeLog')
   app.post('/db/codelogs', mw.codelogs.post)
