@@ -12,8 +12,8 @@ describe 'POST /api/users', ->
   beforeEach utils.wrap (done) ->
     @client = new Client()
     @secret = @client.generateNewSecret()
-    @auth = { user: @client.id, pass: secret }
-    yield client.save()
+    @auth = { user: @client.id, pass: @secret }
+    yield @client.save()
     done()
 
   it 'creates a user that is marked as having been created by the API client', utils.wrap (done) ->
@@ -26,7 +26,7 @@ describe 'POST /api/users', ->
     done()
 
   
-describe 'POST /api/users/oauth-identities', ->
+describe 'POST /api/users/:handle/o-auth-identities', ->
 
   beforeEach utils.wrap (done) ->
     yield utils.clearModels([User, Client])
@@ -38,7 +38,7 @@ describe 'POST /api/users/oauth-identities', ->
     json = { name: 'name', email: 'e@mail.com' }
     [res, body] = yield request.postAsync({url, json, @auth})
     @user = yield User.findById(res.body._id)
-    @url = utils.getURL("/api/users/#{@user.id}/oauth-identities")
+    @url = utils.getURL("/api/users/#{@user.id}/o-auth-identities")
     @provider = new OAuthProvider({lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'})
     @provider.save()
     @json = { provider: @provider.id, accessToken: '1234' }

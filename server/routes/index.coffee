@@ -4,7 +4,7 @@ module.exports.setup = (app) ->
   
   app.all('/api/*', mw.api.clientAuth)
   app.post('/api/users', mw.api.postUser)
-  app.post('/api/users/:handle/oauth-identities', mw.api.postUserOAuthIdentity)
+  app.post('/api/users/:handle/o-auth-identities', mw.api.postUserOAuthIdentity)
   
   passport = require('passport')
   app.post('/auth/login', passport.authenticate('local'), mw.auth.afterLogin)
