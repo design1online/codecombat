@@ -24,6 +24,7 @@ To authenticate a user on CodeCombat through your service, you will need to use 
 
 ## Routes
 
+
 ### POST /api/users
 Creates a user.
 
@@ -36,6 +37,7 @@ A user object, including properties:
 * `_id`: String.
 * `email`: String.
 * `name`: String.
+* `stats`: Object.
 
 #### Example
 ```javascript
@@ -43,6 +45,14 @@ url = 'https://codecombat.com/api/users'
 json = { email: 'an@email.com', name: 'Some Username' }
 request.post({ url, json, auth })
 ```
+
+
+### GET /api/users/:handle
+Returns a user with a given ID. `:handle` should be the user's `_id` or `slug` properties.
+
+#### Returns
+A user object.
+
 
 ### POST /api/users/:handle/o-auth-identities
 Adds an OAuth identity to the user, so that they can be logged in with that identity from then on. The token will be used to make a request to the provider's lookup URL, and use the provided `id`.
@@ -66,6 +76,7 @@ request.post({ url, json, auth}, (err, res) => {
   console.log(res.body.oAuthIdentities) // [ { provider: 'xyx', id: 'abcd' } ]
 })
 ```
+
 
 ### GET /auth/login-o-auth
 Logs a user in given the token.

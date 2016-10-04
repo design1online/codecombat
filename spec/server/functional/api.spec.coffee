@@ -11,6 +11,7 @@ describe 'POST /api/users', ->
   url = utils.getURL('/api/users')
 
   beforeEach utils.wrap (done) ->
+    yield utils.clearModels([User, Client])
     @client = new Client()
     @secret = @client.generateNewSecret()
     @auth = { user: @client.id, pass: @secret }
@@ -24,6 +25,33 @@ describe 'POST /api/users', ->
     expect(body.clientCreator).toBe(@client.id)
     expect(body.name).toBe(json.name)
     expect(body.email).toBe(json.email)
+    done()
+    
+    
+describe 'GET /api/users/:handle', ->
+
+  url = utils.getURL('/api/users')
+
+  beforeEach utils.wrap (done) ->
+    yield utils.clearModels([User, Client])
+    @client = new Client()
+    @secret = @client.generateNewSecret()
+    @auth = { user: @client.id, pass: @secret }
+    yield @client.save()
+    json = { name: 'name', email: 'e@mail.com' }
+    [res, body] = yield request.postAsync({url, json, @auth})
+    @user = yield User.findById(res.body._id)
+    done()
+
+  it 'returns the user, including stats', utils.wrap (done) ->
+    yield @user.update({$set: {'stats.gamesCompleted':1}})
+    url = utils.getURL("/api/users/#{@user.id}")
+    [res, body] = yield request.getAsync({url, json: true, @auth})
+    expect(res.statusCode).toBe(200)
+    expect(body._id).toBe(@user.id)
+    expect(body.name).toBe(@user.get('name'))
+    expect(body.email).toBe(@user.get('email'))
+    expect(body.stats.gamesCompleted).toBe(1)
     done()
 
   

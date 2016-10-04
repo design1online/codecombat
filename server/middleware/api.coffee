@@ -7,6 +7,8 @@ database = require '../commons/database'
 config = require '../../server_config'
 OAuthProvider = require '../models/OAuthProvider'
 
+INCLUDED_PRIVATES = ['email', 'oAuthIdentities']
+
 clientAuth = wrap (req, res, next) ->
   if config.isProduction and not req.secure  
     throw new errors.Unauthorized('API calls must be over HTTPS.')
@@ -28,13 +30,24 @@ clientAuth = wrap (req, res, next) ->
   next()
 
   
-postUser = wrap (req, res, next) ->
+postUser = wrap (req, res) ->
   user = new User({anonymous: false})
   user.set(_.pick(req.body, 'name', 'email'))
   user.set('clientCreator', req.client._id)
   database.validateDoc(user)
   user = yield user.save()
-  res.status(201).send(user.toObject({req, includedPrivates: ['email']}))
+  res.status(201).send(user.toObject({req, includedPrivates: INCLUDED_PRIVATES}))
+  
+  
+getUser = wrap (req, res) ->
+  user = yield database.getDocFromHandle(req, User)
+  if not user
+    throw new errors.NotFound('User not found.')
+
+  unless req.client._id.equals(user.get('clientCreator'))
+    throw new errors.Forbidden('Must have created the user.')
+
+  res.send(user.toObject({req, includedPrivates: INCLUDED_PRIVATES}))
   
   
 postUserOAuthIdentity = wrap (req, res) ->
@@ -73,11 +86,12 @@ postUserOAuthIdentity = wrap (req, res) ->
   oAuthIdentities = user.get('oAuthIdentities') or []
   oAuthIdentities.push(identity)
   user.set({oAuthIdentities})
-  res.send(user.toObject({req}))
+  res.send(user.toObject({req, includedPrivates: INCLUDED_PRIVATES}))
   
   
 module.exports = {
   clientAuth
+  getUser
   postUser
   postUserOAuthIdentity
 }
