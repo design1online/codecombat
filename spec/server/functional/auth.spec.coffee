@@ -6,7 +6,9 @@ Promise = require 'bluebird'
 nock = require 'nock'
 request = require '../request'
 sendwithus = require '../../../server/sendwithus'
+mongoose = require 'mongoose'
 LevelSession = require '../../../server/models/LevelSession'
+OAuthProvider = require '../../../server/models/OAuthProvider'
 
 urlLogin = getURL('/auth/login')
 urlReset = getURL('/auth/reset')
@@ -316,7 +318,46 @@ describe 'POST /auth/login-gplus', ->
     [res, body] = yield request.postAsync url, { json: { gplusID: '1234', gplusAccessToken: 'abcd' }}
     expect(res.statusCode).toBe(404)
     done()
-          
+
+
+describe 'GET /auth/login-o-auth', ->
+
+  beforeEach utils.wrap (done) ->
+    yield utils.clearModels([User])
+    @provider = new OAuthProvider({lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'})
+    @provider.save()
+    @user = yield utils.initUser({oAuthIdentities: [{provider: @provider._id, id: 'abcd'}]})
+    @providerRequest = nock('https://oauth.provider').get('/user?t=1234')
+    @url = utils.getURL("/auth/login-o-auth")
+    @qs = { provider: @provider.id, accessToken: '1234' }
+    done()
+
+  it 'logs the user in', utils.wrap (done) ->
+    @providerRequest.reply(200, {id: 'abcd'})
+    [res, body] = yield request.getAsync({ @url, @qs, json:true, followRedirect:false })
+    expect(res.statusCode).toBe(302)
+    [res, body] = yield request.getAsync({ url: utils.getURL('/auth/whoami'), json: true })
+    expect(res.body._id).toBe(@user.id)
+    done()
+
+  it 'returns 422 if "provider" and "accessToken" are not provided', utils.wrap (done) ->
+    qs = {}
+    [res, body] = yield request.getAsync({ @url, qs })
+    expect(res.statusCode).toBe(422)
+    done()
+
+  it 'returns 404 if the provider is not found', utils.wrap (done) ->
+    qs = { provider: new mongoose.Types.ObjectId() + '', accessToken: '1234' }
+    [res, body] = yield request.getAsync({ @url, qs })
+    expect(res.statusCode).toBe(404)
+    done()
+
+  it 'returns 422 if the token lookup fails', utils.wrap (done) ->
+    @providerRequest.reply(400, {})
+    [res, body] = yield request.getAsync({ @url, @qs })
+    expect(res.statusCode).toBe(422)
+    done()
+
       
 describe 'POST /auth/spy', ->
   beforeEach utils.wrap (done) ->

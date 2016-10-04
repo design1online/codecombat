@@ -4,6 +4,7 @@ errors = require '../commons/errors'
 wrap = require 'co-express'
 Promise = require 'bluebird'
 parse = require '../commons/parse'
+database = require '../commons/database'
 request = require 'request'
 User = require '../models/User'
 utils = require '../lib/utils'
@@ -11,6 +12,7 @@ mongoose = require 'mongoose'
 authentication = require 'passport'
 sendwithus = require '../sendwithus'
 LevelSession = require '../models/LevelSession'
+OAuthProvider = require '../models/OAuthProvider'
 config = require '../../server_config'
 
 module.exports =
@@ -164,6 +166,39 @@ module.exports =
     req.logInAsync = Promise.promisify(req.logIn)
     yield req.logInAsync(user)
     next()
+    
+  loginByOAuthProvider: wrap (req, res) ->
+    { provider: providerID, accessToken } = req.query
+    
+    unless providerID and accessToken
+      throw new errors.UnprocessableEntity('Properties "provider" and "accessToken" required.')
+    
+    if not database.isID(providerID)
+      throw new errors.UnprocessableEntity('"provider" is not a valid id')
+    
+    provider = yield OAuthProvider.findById(providerID)
+    if not provider
+      throw new errors.NotFound('Provider not found.')
+    
+    userData = yield provider.lookupAccessToken(accessToken)
+    if not userData
+      throw new errors.UnprocessableEntity('Token was invalid')
+    
+    identity = {
+      provider: provider._id
+      id: userData.id
+    }
+    
+    user = yield User.findOne({oAuthIdentities: { $elemMatch: identity }})
+    if not user
+      throw new errors.NotFound('No user with this identity exists')
+    
+    req.loginAsync = Promise.promisify(req.login)
+    yield req.loginAsync user
+    
+    activity = req.user.trackActivity 'login', 1
+    yield req.user.update {activity: activity}
+    res.redirect '/'
     
   spy: wrap (req, res) ->
     throw new errors.Unauthorized('You must be logged in to enter espionage mode') unless req.user

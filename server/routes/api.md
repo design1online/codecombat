@@ -1,6 +1,7 @@
 # API Routes
 
-Examples are in JavaScript using the [request package](https://github.com/request/request). Requests use JSON.
+Examples are in JavaScript on a Node server using the [request package](https://github.com/request/request).
+Requests use JSON.
 
 ## Client Authentication
 
@@ -27,14 +28,14 @@ To authenticate a user on CodeCombat through your service, you will need to use 
 Creates a user.
 
 #### Params
-* `email`
-* `name`
+* `email`: String.
+* `name`: String.
 
 #### Returns
 A user object, including properties:
-* `_id`
-* `email`
-* `name`
+* `_id`: String.
+* `email`: String.
+* `name`: String.
 
 #### Example
 ```javascript
@@ -47,8 +48,8 @@ request.post({ url, json, auth })
 Adds an OAuth identity to the user, so that they can be logged in with that identity from then on. The token will be used to make a request to the provider's lookup URL, and use the provided `id`.
 
 #### Params
-* `provider`
-* `accessToken`
+* `provider`: String. Your OAuth Provider ID.
+* `accessToken`: String. Will be passed through your lookup URL to get the user ID.
 
 #### Returns
 A user object, including the property `oAuthIdentities`.
@@ -65,3 +66,23 @@ request.post({ url, json, auth}, (err, res) => {
   console.log(res.body.oAuthIdentities) // [ { provider: 'xyx', id: 'abcd' } ]
 })
 ```
+
+### GET /auth/login-o-auth
+Logs a user in given the token.
+
+#### Params
+* `provider`: String. Your OAuth Provider ID.
+* `accessToken`: String. Will be passed through your lookup URL to get the user ID.
+
+#### Returns
+A redirect to the home page and cookie-setting headers.
+
+#### Example
+
+In this example, your lookup URL is `https://oauth.provider/user?t=<%= accessToken %>'` and returns `{ id: 'abcd' }`
+
+```javascript
+res.redirect(`https://codecombat.com/auth/login-o-auth?provider=${OAUTH_PROVIDER_ID}&accessToken=1234`)
+// User is sent 
+```
+
