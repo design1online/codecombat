@@ -32,11 +32,9 @@ To authenticate a user on CodeCombat through your service, you will need to use 
 1. **Link the CodeCombat user to an OAuth identity**: Use `POST /api/users/:handle/oauth-identities`, providing a token and your OAuth id which we will generate for you.
 1. **Log the user in**: You redirect your user to `/auth/login-o-auth`, providing your OAuth id and token again.
 
-## Routes
+# Routes
 
-* * *
-### POST /api/users
-* * *
+## POST /api/users
 Creates a [user](#users).
 
 #### Params
@@ -50,14 +48,10 @@ json = { email: 'an@email.com', name: 'Some Username' }
 request.post({ url, json, auth })
 ```
 
-* * *
-### GET /api/users/:handle
-* * *
+## GET /api/users/:handle
 Returns a [user](#users) with a given ID. `:handle` should be the user's `_id` or `slug` properties.
 
-* * *
-### POST /api/users/:handle/o-auth-identities
-* * *
+## POST /api/users/:handle/o-auth-identities
 Adds an OAuth identity to the user, so that they can be logged in with that identity from then on. The token will be used to make a request to the provider's lookup URL, and use the provided `id`.
 
 #### Params
@@ -77,9 +71,7 @@ request.post({ url, json, auth}, (err, res) => {
 })
 ```
 
-* * *
-### GET /auth/login-o-auth
-* * *
+## GET /auth/login-o-auth
 Logs a user in given the token.
 
 #### Params
@@ -100,11 +92,9 @@ res.redirect(url)
 // is logged in and redirected to the home page.
 ```
 
-## Resources
+# Resources
 
-* * *
-### Users
-* * *
+## Users
 
 #### Properties
 This is a subset of all the User properties.
