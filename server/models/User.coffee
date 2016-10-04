@@ -39,6 +39,7 @@ UserSchema.index({'schoolName': 1}, {name: 'schoolName index', sparse: true})
 UserSchema.index({'country': 1}, {name: 'country index', sparse: true})
 UserSchema.index({'role': 1}, {name: 'role index', sparse: true})
 UserSchema.index({'coursePrepaid._id': 1}, {name: 'course prepaid id index', sparse: true})
+UserSchema.index({'oAuthIdentities.provider': 1, 'oAuthIdentities.id': 1}, {name: 'oauth identities index', unique: true, sparse: true})
 
 UserSchema.post('init', ->
   @set('anonymous', false) if @get('email')

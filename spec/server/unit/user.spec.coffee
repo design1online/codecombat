@@ -2,6 +2,7 @@ GLOBAL._ = require 'lodash'
 
 User = require '../../../server/models/User'
 utils = require '../utils'
+mongoose = require 'mongoose'
 
 describe 'User', ->
 
@@ -25,6 +26,27 @@ describe 'User', ->
     user.set 'emailSubscriptions', ['tester']
     user.setEmailSubscription('artisanNews', true)
     expect(JSON.stringify(user.get('emailSubscriptions'))).toBe(JSON.stringify(['tester', 'level_creator']))
+    done()
+
+  it 'prevents duplicate oAuthIdentities', utils.wrap (done) ->
+    provider1 = new mongoose.Types.ObjectId()
+    provider2 = new mongoose.Types.ObjectId()
+    identity1 = { provider: provider1, id: 'abcd' }
+    identity2 = { provider: provider2, id: 'abcd' }
+    identity3 = { provider: provider1, id: '1234' }
+
+    # These three should live in harmony
+    users = []
+    users.push yield utils.initUser({ oAuthIdentities: [identity1] })
+    users.push yield utils.initUser({ oAuthIdentities: [identity2] })
+    users.push yield utils.initUser({ oAuthIdentities: [identity3] })
+
+    e = null
+    try
+      users.push yield utils.initUser({ oAuthIdentities: [identity1] })
+    catch e
+
+    expect(e).not.toBe(null)
     done()
 
   describe '.updateServiceSettings()', ->

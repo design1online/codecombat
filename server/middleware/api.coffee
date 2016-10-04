@@ -49,6 +49,9 @@ postUserOAuthIdentity = wrap (req, res) ->
   unless providerID and accessToken
     throw new errors.UnprocessableEntity('Properties "provider" and "accessToken" required.')
     
+  if not database.isID(providerID)
+    throw new errors.UnprocessableEntity('"provider" is not a valid id')
+    
   provider = yield OAuthProvider.findById(providerID)
   if not provider
     throw new errors.NotFound('Provider not found.')
@@ -62,11 +65,11 @@ postUserOAuthIdentity = wrap (req, res) ->
     id: userData.id
   }
 
-  otherUser = yield User.findOne({oAuthIdentities:identity})
+  otherUser = yield User.findOne({oAuthIdentities: { $elemMatch: identity }})
   if otherUser
     throw new errors.Conflict('User already exists with this identity')
 
-  yield user.update({$addToSet: {oAuthIdentities: identity}})
+  yield user.update({$push: {oAuthIdentities: identity}})
   oAuthIdentities = user.get('oAuthIdentities') or []
   oAuthIdentities.push(identity)
   user.set({oAuthIdentities})

@@ -4,6 +4,7 @@ OAuthProvider = require '../../../server/models/OAuthProvider'
 utils = require '../utils'
 nock = require 'nock'
 request = require '../request'
+mongoose = require 'mongoose'
 
 describe 'POST /api/users', ->
 
@@ -54,3 +55,40 @@ describe 'POST /api/users/:handle/o-auth-identities', ->
     expect(res.body.oAuthIdentities[0].provider).toBe(@provider.id)
     done()
 
+  it 'returns 404 if the user is not foud', utils.wrap (done) ->
+    url = utils.getURL("/api/users/dne/o-auth-identities")
+    [res, body] = yield request.postAsync({ url, @json, @auth })
+    expect(res.statusCode).toBe(404)
+    done()
+
+  it 'returns 403 if the client did not create the given user', utils.wrap (done) ->
+    user = yield utils.initUser()
+    url = utils.getURL("/api/users/#{user.id}/o-auth-identities")
+    [res, body] = yield request.postAsync({ url, @json, @auth })
+    expect(res.statusCode).toBe(403)
+    done()
+
+  it 'returns 422 if "provider" and "accessToken" are not provided', utils.wrap (done) ->
+    json = {}
+    [res, body] = yield request.postAsync({ @url, json, @auth })
+    expect(res.statusCode).toBe(422)
+    done()
+
+  it 'returns 404 if the provider is not found', utils.wrap (done) ->
+    json = { provider: new mongoose.Types.ObjectId() + '', accessToken: '1234' }
+    [res, body] = yield request.postAsync({ @url, json, @auth })
+    expect(res.statusCode).toBe(404)
+    done()
+
+  it 'returns 422 if the token lookup fails', utils.wrap (done) ->
+    @providerRequest.reply(400, {})
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
+    expect(res.statusCode).toBe(422)
+    done()
+
+  it 'returns 409 if a user already exists with the given id/provider', utils.wrap (done) ->
+    yield utils.initUser({oAuthIdentities: [{ provider: @provider._id, id: 'abcd'}]})
+    @providerRequest.reply(200, {id: 'abcd'})
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
+    expect(res.statusCode).toBe(409)
+    done()
