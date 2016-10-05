@@ -12,6 +12,8 @@ OAuthProviderSchema.statics.editableProperties = [
   'name'
 ]
 
+OAuthProviderSchema.plugin(plugins.NamedPlugin)
+
 OAuthProviderSchema.methods.lookupAccessToken = co.wrap (accessToken) ->
   request = require('request')
   url = _.template(@get('lookupUrlTemplate'))({accessToken})

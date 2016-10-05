@@ -19,6 +19,7 @@ ClientSchema.statics.hash = (secret) ->
   return shasum.digest('hex')
 
 ClientSchema.statics.postEditableProperties = []
+ClientSchema.statics.editableProperties = []
 
 ClientSchema.set('toObject', {
   transform: (doc, ret, options) ->
