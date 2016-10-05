@@ -9,13 +9,7 @@ subscribeWithPrepaidCode = wrap (req, res) ->
     throw new errors.UnprocessableEntity('You must provide a valid prepaid code')
 
   # Check if code exists and has room for more redeemers
-  try
-    prepaid = yield Prepaid.findOne({ code: ppc })
-  catch e
-    msg = "Redeem Prepaid Code find: #{JSON.stringify(e)}"
-    log.warn "Subscription Error: #{req.user.get('slug')} (#{req.user.id}): '#{msg}'"
-    throw e
-    
+  prepaid = yield Prepaid.findOne({ code: ppc })
   unless prepaid
     msg = "Could not find prepaid code #{ppc}"
     log.warn "Subscription Error: #{req.user.get('slug')} (#{req.user.id}): '#{msg}'"

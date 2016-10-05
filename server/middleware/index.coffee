@@ -13,6 +13,7 @@ module.exports =
   files: require './files'
   healthcheck: require './healthcheck'
   levels: require './levels'
+  logging: require './logging'
   named: require './named'
   patchable: require './patchable'
   patches: require './patches'

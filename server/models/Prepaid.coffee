@@ -67,18 +67,12 @@ PrepaidSchema.methods.redeem = co.wrap (user) ->
       throw new errors.Forbidden('User already redeemed')
 
   newRedeemerPush = { $push: { redeemers : { date: new Date(), userID: user._id } }}
-  try
-    result = yield Prepaid.update(
-      { 
-        _id: @_id,
-        'redeemers.userID': { $ne: user._id },
-        '$where': 'this.redeemers.length < this.maxRedeemers'
-      }, newRedeemerPush)
-  catch e
-    # TODO: Replace special subscription error handling
-    msg = "Subscribe with Prepaid Code update: #{JSON.stringify(e)}"
-    log.warn "Subscription Error: #{user.get('slug')} (#{user.id}): '#{msg}'"
-    throw e
+  result = yield Prepaid.update(
+    { 
+      _id: @_id,
+      'redeemers.userID': { $ne: user._id },
+      '$where': 'this.redeemers.length < this.maxRedeemers'
+    }, newRedeemerPush)
   
   if result.nModified isnt 1
     throw new errors.Forbidden('Can\'t add user to prepaid redeemers')
@@ -87,13 +81,8 @@ PrepaidSchema.methods.redeem = co.wrap (user) ->
   subscription = yield findStripeSubscriptionAsync(customerID, {subscriptionID})
 
   if subscription
-    try
-      stripeSubscriptionPeriodEndDate = new Date(subscription.current_period_end * 1000)
-      yield cancelSubscriptionImmediatelyAsync(user, subscription)
-    catch e
-      msg = "Redeem Prepaid Code Stripe cancel subscription error: #{JSON.stringify(e)}"
-      log.warn "Subscription Error: #{user.get('slug')} (#{user.id}): '#{msg}'"
-      throw e
+    stripeSubscriptionPeriodEndDate = new Date(subscription.current_period_end * 1000)
+    yield cancelSubscriptionImmediatelyAsync(user, subscription)
 
   Product = require './Product'
   product = yield Product.findOne({name: 'basic_subscription'})
@@ -119,13 +108,7 @@ PrepaidSchema.methods.redeem = co.wrap (user) ->
   purchased.gems ?= 0
   purchased.gems += product.get('gems') * months if product.get('gems')
   user.set('purchased', purchased)
-
-  try
-    yield user.save()
-  catch e
-    msg = "User save error: #{JSON.stringify(e)}"
-    log.warn "Subscription Error: #{user.get('slug')} (#{user.id}): '#{msg}'"
-    throw e
+  yield user.save()
 
 
 PrepaidSchema.statics.postEditableProperties = [
