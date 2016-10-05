@@ -22,4 +22,4 @@ OAuthProviderSchema.methods.lookupAccessToken = co.wrap (accessToken) ->
     return null
   return body
 
-module.exports = OAuthProvider = mongoose.model('OAuthProvider', OAuthProviderSchema)
+module.exports = OAuthProvider = mongoose.model('OAuthProvider', OAuthProviderSchema, 'o.auth.providers')
