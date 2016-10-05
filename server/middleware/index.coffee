@@ -18,6 +18,7 @@ module.exports =
   patches: require './patches'
   prepaids: require './prepaids'
   rest: require './rest'
+  subscriptions: require './subscriptions'
   trialRequests: require './trial-requests'
   users: require './users'
   versions: require './versions'

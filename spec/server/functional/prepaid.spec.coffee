@@ -579,7 +579,7 @@ describe '/db/prepaid', ->
           stripe.customers.retrieve joeData.stripe.customerID, (err, customer) =>
             expect(err).toBeNull()
   
-            findStripeSubscription customer.id, subscriptionID: joeData.stripe?.subscriptionID, (subscription) =>
+            findStripeSubscription customer.id, subscriptionID: joeData.stripe?.subscriptionID, (err, subscription) =>
               if subscription
                 stripeSubscriptionPeriodEndDate = new moment(subscription.current_period_end * 1000)
               else
@@ -592,7 +592,7 @@ describe '/db/prepaid', ->
                 endDate = stripeSubscriptionPeriodEndDate.add(3, 'months').toISOString().substring(0, 10)
                 expect(result?.stripe?.free).toEqual(endDate)
                 expect(result?.purchased?.gems).toEqual(14000)
-                findStripeSubscription customer.id, subscriptionID: joeData.stripe?.subscriptionID, (subscription) =>
+                findStripeSubscription customer.id, subscriptionID: joeData.stripe?.subscriptionID, (err, subscription) =>
                   expect(subscription).toBeNull()
                   nockDone()
                   done()
