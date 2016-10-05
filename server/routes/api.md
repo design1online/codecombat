@@ -34,7 +34,7 @@ To authenticate a user on CodeCombat through your service, you will need to use 
 
 # Routes
 
-## POST /api/users
+## `POST /api/users`
 Creates a [user](#users).
 
 #### Params
@@ -48,10 +48,10 @@ json = { email: 'an@email.com', name: 'Some Username' }
 request.post({ url, json, auth })
 ```
 
-## GET /api/users/:handle
+## `GET /api/users/:handle`
 Returns a [user](#users) with a given ID. `:handle` should be the user's `_id` or `slug` properties.
 
-## POST /api/users/:handle/o-auth-identities
+## `POST /api/users/:handle/o-auth-identities`
 Adds an OAuth identity to the user, so that they can be logged in with that identity from then on. The token will be used to make a request to the provider's lookup URL, and use the provided `id`.
 
 #### Params
@@ -71,7 +71,7 @@ request.post({ url, json, auth}, (err, res) => {
 })
 ```
 
-## POST /api/users/:handle/prepaids
+## `POST /api/users/:handle/prepaids`
 Grants a user premium access.
 
 #### Params
@@ -87,7 +87,7 @@ request.post({ url, json, auth }, (err, res) => {
 })
 ```
 
-## GET /auth/login-o-auth
+## `GET /auth/login-o-auth`
 Logs a user in given the token.
 
 #### Params
