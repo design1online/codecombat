@@ -59,7 +59,8 @@ PrepaidSchema.methods.redeem = co.wrap (user) ->
     throw new errors.Forbidden('Too many redeemers')
     
   months = parseInt(@get('properties')?.months)
-  if isNaN(months) or months < 1
+  givenEndDate = @get('endDate')
+  if (not givenEndDate) and (isNaN(months) or months < 1)
     throw new errors.UnprocessableEntity('Bad months') 
   
   for redeemer in oldRedeemers
@@ -93,20 +94,25 @@ PrepaidSchema.methods.redeem = co.wrap (user) ->
   # TODO: refactor this into some form useable by both this and purchaseYearSale
   stripeInfo = _.cloneDeep(user.get('stripe') ? {})
   moment = require 'moment'
-  endDate = new moment()
-  if stripeSubscriptionPeriodEndDate
-    endDate = new moment(stripeSubscriptionPeriodEndDate)
-  else if _.isString(stripeInfo.free) and new moment().isBefore(new moment(stripeInfo.free))
-    endDate = new moment(stripeInfo.free)
-  endDate = endDate.add(months, 'months')
-  stripeInfo.free = endDate.toISOString().substring(0, 10)
+  if givenEndDate
+    if _.isString(stripeInfo.free) and givenEndDate < stripeInfo.free
+      throw new errors.UnprocessableEntity('Prepaid expiration is earlier than the user\'s existing expiration')
+    endDate = moment(givenEndDate)
+  else
+    endDate = new moment()
+    if stripeSubscriptionPeriodEndDate
+      endDate = new moment(stripeSubscriptionPeriodEndDate)
+    else if _.isString(stripeInfo.free) and new moment().isBefore(new moment(stripeInfo.free))
+      endDate = new moment(stripeInfo.free)
+    endDate = endDate.add(months, 'months')
+  stripeInfo.free = endDate.toISOString()
   user.set('stripe', stripeInfo)
 
   # Add gems to User
   purchased = _.clone(user.get('purchased'))
   purchased ?= {}
   purchased.gems ?= 0
-  purchased.gems += product.get('gems') * months if product.get('gems')
+  purchased.gems += product.get('gems') * months if product.get('gems') and months
   user.set('purchased', purchased)
   yield user.save()
 

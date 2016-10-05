@@ -98,3 +98,20 @@ describe 'User', ->
       expect(user.get('stats.testNumber')).toBe(1)
       expect(user.get('stats.concepts.basic')).toBe(10)
       done()
+      
+  describe 'subscription virtual', ->
+    it 'has active and ends properties', ->
+      moment = require 'moment'
+      stripeEnd = moment().add(12, 'months').toISOString().substring(0,10)
+      user1 = new User({stripe: {free:stripeEnd}})
+      expectedEnd = "#{stripeEnd}T00:00:00.000Z"
+      expect(user1.get('subscription').active).toBe(true)
+      expect(user1.get('subscription').ends).toBe(expectedEnd)
+      expect(user1.toObject({virtuals: true}).subscription.ends).toBe(expectedEnd)
+      
+      user2 = new User()
+      expect(user2.get('subscription').active).toBe(false)
+      
+      user3 = new User({stripe: {free: true}})
+      expect(user3.get('subscription').active).toBe(true)
+      expect(user3.get('subscription').ends).toBeUndefined()

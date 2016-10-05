@@ -5,6 +5,8 @@ utils = require '../utils'
 nock = require 'nock'
 request = require '../request'
 mongoose = require 'mongoose'
+moment = require 'moment'
+Prepaid = require '../../../server/models/Prepaid'
 
 describe 'POST /api/users', ->
 
@@ -119,4 +121,40 @@ describe 'POST /api/users/:handle/o-auth-identities', ->
     @providerRequest.reply(200, {id: 'abcd'})
     [res, body] = yield request.postAsync({ @url, @json, @auth })
     expect(res.statusCode).toBe(409)
+    done()
+
+    
+describe 'POST /api/users/:handle/prepaids', ->
+
+  beforeEach utils.wrap (done) ->
+    yield utils.clearModels([User, Client])
+    @client = new Client()
+    @secret = @client.generateNewSecret()
+    yield @client.save()
+    @auth = { user: @client.id, pass: @secret }
+    url = utils.getURL('/api/users')
+    json = { name: 'name', email: 'e@mail.com' }
+    [res, body] = yield request.postAsync({url, json, @auth})
+    @user = yield User.findById(res.body._id)
+    @url = utils.getURL("/api/users/#{@user.id}/prepaids")
+    done()
+
+  it 'provides the user with premium access until the given endDate, and creates a prepaid', utils.wrap (done) ->
+    expect(@user.hasSubscription()).toBe(false)
+    t0 = new Date().toISOString()
+    endDate = moment().add(12, 'months').toISOString()
+    json = { endDate }
+    [res, body] = yield request.postAsync({ @url, json, @auth })
+    t1 = new Date().toISOString()
+    expect(res.body.subscription.ends).toBe(endDate)
+    expect(res.statusCode).toBe(200)
+    prepaid = yield Prepaid.findOne({'redeemers.userID': @user._id})
+    expect(prepaid).toBeDefined()
+    expect(prepaid.get('clientCreator').equals(@client._id)).toBe(true)
+    expect(prepaid.get('redeemers')[0].userID.equals(@user._id)).toBe(true)
+    expect(prepaid.get('startDate')).toBeGreaterThan(t0)
+    expect(prepaid.get('startDate')).toBeLessThan(t1)
+    expect(prepaid.get('endDate')).toBe(endDate)
+    user = yield User.findById(@user.id)
+    expect(user.hasSubscription()).toBe(true)
     done()

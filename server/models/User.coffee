@@ -505,6 +505,17 @@ UserSchema.statics.makeNew = (req) ->
 
 UserSchema.plugin plugins.NamedPlugin
 
+UserSchema.virtual('subscription').get ->
+  subscription = {
+    active: @hasSubscription()
+  } 
+  
+  { free } = @get('stripe') ? {}
+  if _.isString(free)
+    subscription.ends = new Date(free).toISOString()
+
+  return subscription
+
 module.exports = User = mongoose.model('User', UserSchema)
 User.idCounter = 0
 

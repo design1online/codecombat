@@ -71,6 +71,22 @@ request.post({ url, json, auth}, (err, res) => {
 })
 ```
 
+## POST /api/users/:handle/prepaids
+Grants a user premium access.
+
+#### Params
+* `endDate`: String. Must be ISO 8601 formatted UTC time, such as '2012-04-23T18:25:43.511Z'. JavaScript Date's `toISOString` returns this format.
+
+#### Example
+
+```javascript
+url = `https://codecombat.com/api/users/${userID}/prepaids`
+json = { json: new Date('2017-01-01').toISOString() }
+request.post({ url, json, auth }, (err, res) => {
+  console.log(res.body.subscription) // { ends: '2017-01-01T00:00:00.000Z', active: true }
+})
+```
+
 ## GET /auth/login-o-auth
 Logs a user in given the token.
 

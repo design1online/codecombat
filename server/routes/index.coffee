@@ -6,6 +6,7 @@ module.exports.setup = (app) ->
   app.post('/api/users', mw.api.postUser)
   app.get('/api/users/:handle', mw.api.getUser)
   app.post('/api/users/:handle/o-auth-identities', mw.api.postUserOAuthIdentity)
+  app.post('/api/users/:handle/prepaids', mw.api.postUserPrepaid)
   
   passport = require('passport')
   app.post('/auth/login', passport.authenticate('local'), mw.auth.afterLogin)
