@@ -590,7 +590,7 @@ describe '/db/prepaid', ->
                 expect(err).toBeNull()
                 expect(res.statusCode).toEqual(200)
                 endDate = stripeSubscriptionPeriodEndDate.add(3, 'months').toISOString().substring(0, 10)
-                expect(result?.stripe?.free).toEqual(endDate)
+                expect(result?.stripe?.free.substring(0,10)).toEqual(endDate)
                 expect(result?.purchased?.gems).toEqual(14000)
                 findStripeSubscription customer.id, subscriptionID: joeData.stripe?.subscriptionID, (err, subscription) =>
                   expect(subscription).toBeNull()
@@ -603,7 +603,7 @@ describe '/db/prepaid', ->
           expect(err).toBeNull()
           expect(res.statusCode).toEqual(200)
           endDate = new moment().add(3, 'months').toISOString().substring(0, 10)
-          expect(result?.stripe?.free).toEqual(endDate)
+          expect(result?.stripe?.free.substring(0,10)).toEqual(endDate)
           expect(result?.purchased?.gems).toEqual(10500)
           done()
 
@@ -629,7 +629,7 @@ describe '/db/prepaid', ->
           expect(err).toBeNull()
           expect(res.statusCode).toEqual(200)
           endDate = new moment().add(3, 'months').toISOString().substring(0, 10)
-          expect(result?.stripe?.free).toEqual(endDate)
+          expect(result?.stripe?.free.substring(0,10)).toEqual(endDate)
           expect(result?.purchased?.gems).toEqual(10500)
           done()
 
