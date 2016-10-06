@@ -24,9 +24,9 @@ OAuthProviderSchema.methods.lookupAccessToken = co.wrap (accessToken) ->
   return body
   
 OAuthProviderSchema.methods.getTokenWithCode = co.wrap (code) ->
-  url = @get('tokenURL')
+  url = @get('tokenUrl')
   if not url
-    throw new errors.InternalServerError('OAuthProvider does not have a "tokenURL" set.')
+    throw new errors.InternalServerError('OAuthProvider does not have a "tokenUrl" set.')
   json = {
     grant_type: 'authorization_code'
     code

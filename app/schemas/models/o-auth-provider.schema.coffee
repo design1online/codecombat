@@ -9,8 +9,8 @@ OAuthProviderSchema = {
       description: '
         A template of the URL for the user resource. Should include "<%= accessToken %>" for string interpolation.'
     }
-    tokenURL: { type: 'string' }
-    authorizeURL: { type: 'string' }
+    tokenUrl: { type: 'string' }
+    authorizeUrl: { type: 'string' }
     clientID: { type: 'string' }
   }
 }

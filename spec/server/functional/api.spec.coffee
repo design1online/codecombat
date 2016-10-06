@@ -72,7 +72,7 @@ describe 'POST /api/users/:handle/o-auth-identities', ->
     @url = utils.getURL("/api/users/#{@user.id}/o-auth-identities")
     @provider = new OAuthProvider({
       lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'
-      tokenURL: 'https://oauth.provider/oauth2/token'
+      tokenUrl: 'https://oauth.provider/oauth2/token'
     })
     @provider.save()
     @json = { provider: @provider.id, accessToken: '1234' }

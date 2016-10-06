@@ -326,7 +326,7 @@ describe 'GET /auth/login-o-auth', ->
     yield utils.clearModels([User])
     @provider = new OAuthProvider({
       lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'
-      tokenURL: 'https://oauth.provider/oauth2/token'
+      tokenUrl: 'https://oauth.provider/oauth2/token'
     })
     @provider.save()
     @user = yield utils.initUser({oAuthIdentities: [{provider: @provider._id, id: 'abcd'}]})
