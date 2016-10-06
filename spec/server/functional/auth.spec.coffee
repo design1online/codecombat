@@ -324,20 +324,32 @@ describe 'GET /auth/login-o-auth', ->
 
   beforeEach utils.wrap (done) ->
     yield utils.clearModels([User])
-    @provider = new OAuthProvider({lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'})
+    @provider = new OAuthProvider({
+      lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'
+      tokenURL: 'https://oauth.provider/oauth2/token'
+    })
     @provider.save()
     @user = yield utils.initUser({oAuthIdentities: [{provider: @provider._id, id: 'abcd'}]})
-    @providerRequest = nock('https://oauth.provider').get('/user?t=1234')
+    @providerNock = nock('https://oauth.provider')
+    @providerLookupRequest = @providerNock.get('/user?t=1234')
     @url = utils.getURL("/auth/login-o-auth")
     @qs = { provider: @provider.id, accessToken: '1234' }
     done()
 
   it 'logs the user in', utils.wrap (done) ->
-    @providerRequest.reply(200, {id: 'abcd'})
+    @providerLookupRequest.reply(200, {id: 'abcd'})
     [res, body] = yield request.getAsync({ @url, @qs, json:true, followRedirect:false })
     expect(res.statusCode).toBe(302)
     [res, body] = yield request.getAsync({ url: utils.getURL('/auth/whoami'), json: true })
     expect(res.body._id).toBe(@user.id)
+    done()
+    
+  it 'can take a code and do a token lookup', utils.wrap (done) ->
+    @providerNock.get('/oauth2/token').reply(200, {access_token: '1234'})
+    @providerLookupRequest.reply(200, {id: 'abcd'})
+    qs =  { provider: @provider.id, code: 'xyzzy' }
+    [res, body] = yield request.getAsync({ @url, qs, json:true, followRedirect:false })
+    expect(res.statusCode).toBe(302)
     done()
 
   it 'returns 422 if "provider" and "accessToken" are not provided', utils.wrap (done) ->
@@ -353,7 +365,7 @@ describe 'GET /auth/login-o-auth', ->
     done()
 
   it 'returns 422 if the token lookup fails', utils.wrap (done) ->
-    @providerRequest.reply(400, {})
+    @providerLookupRequest.reply(400, {})
     [res, body] = yield request.getAsync({ @url, @qs })
     expect(res.statusCode).toBe(422)
     done()

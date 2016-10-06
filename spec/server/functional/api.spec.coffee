@@ -70,19 +70,32 @@ describe 'POST /api/users/:handle/o-auth-identities', ->
     [res, body] = yield request.postAsync({url, json, @auth})
     @user = yield User.findById(res.body._id)
     @url = utils.getURL("/api/users/#{@user.id}/o-auth-identities")
-    @provider = new OAuthProvider({lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'})
+    @provider = new OAuthProvider({
+      lookupUrlTemplate: 'https://oauth.provider/user?t=<%= accessToken %>'
+      tokenURL: 'https://oauth.provider/oauth2/token'
+    })
     @provider.save()
     @json = { provider: @provider.id, accessToken: '1234' }
-    @providerRequest = nock('https://oauth.provider').get('/user?t=1234')
+    @providerNock = nock('https://oauth.provider')
+    @providerLookupRequest = @providerNock.get('/user?t=1234')
     done()
 
   it 'adds a new identity to the user if everything checks out', utils.wrap (done) ->
-    @providerRequest.reply(200, {id: 'abcd'})
+    @providerLookupRequest.reply(200, {id: 'abcd'})
     [res, body] = yield request.postAsync({ @url, @json, @auth })
     expect(res.statusCode).toBe(200)
     expect(res.body.oAuthIdentities.length).toBe(1)
     expect(res.body.oAuthIdentities[0].id).toBe('abcd')
     expect(res.body.oAuthIdentities[0].provider).toBe(@provider.id)
+    done()
+
+  it 'can take a code and do a token lookup', utils.wrap (done) ->
+    @providerNock.get('/oauth2/token').reply(200, {access_token: '1234'})
+    @providerLookupRequest.reply(200, {id: 'abcd'})
+    json = { provider: @provider.id, code: 'xyzzy' }
+    [res, body] = yield request.postAsync({ @url, json, @auth })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.oAuthIdentities.length).toBe(1)
     done()
 
   it 'returns 404 if the user is not foud', utils.wrap (done) ->
@@ -111,14 +124,14 @@ describe 'POST /api/users/:handle/o-auth-identities', ->
     done()
 
   it 'returns 422 if the token lookup fails', utils.wrap (done) ->
-    @providerRequest.reply(400, {})
+    @providerLookupRequest.reply(400, {})
     [res, body] = yield request.postAsync({ @url, @json, @auth })
     expect(res.statusCode).toBe(422)
     done()
 
   it 'returns 409 if a user already exists with the given id/provider', utils.wrap (done) ->
     yield utils.initUser({oAuthIdentities: [{ provider: @provider._id, id: 'abcd'}]})
-    @providerRequest.reply(200, {id: 'abcd'})
+    @providerLookupRequest.reply(200, {id: 'abcd'})
     [res, body] = yield request.postAsync({ @url, @json, @auth })
     expect(res.statusCode).toBe(409)
     done()

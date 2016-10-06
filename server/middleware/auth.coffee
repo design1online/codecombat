@@ -168,10 +168,9 @@ module.exports =
     next()
     
   loginByOAuthProvider: wrap (req, res) ->
-    { provider: providerID, accessToken } = req.query
-    
-    unless providerID and accessToken
-      throw new errors.UnprocessableEntity('Properties "provider" and "accessToken" required.')
+    { provider: providerID, accessToken, code } = req.query
+    unless providerID and (accessToken or code)
+      throw new errors.UnprocessableEntity('Properties "provider" and "accessToken" or "code" required.')
     
     if not database.isID(providerID)
       throw new errors.UnprocessableEntity('"provider" is not a valid id')
@@ -179,6 +178,11 @@ module.exports =
     provider = yield OAuthProvider.findById(providerID)
     if not provider
       throw new errors.NotFound('Provider not found.')
+
+    if code and not accessToken
+      { access_token: accessToken } = yield provider.getTokenWithCode(code)
+      if not accessToken
+        throw new errors.UnprocessableEntity('Code lookup failed')
     
     userData = yield provider.lookupAccessToken(accessToken)
     if not userData

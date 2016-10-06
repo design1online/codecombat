@@ -71,10 +71,15 @@ postUserOAuthIdentity = wrap (req, res) ->
   provider = yield OAuthProvider.findById(providerID)
   if not provider
     throw new errors.NotFound('Provider not found.')
+    
+  if code and not accessToken
+    { access_token: accessToken } = yield provider.getTokenWithCode(code)
+    if not accessToken
+      throw new errors.UnprocessableEntity('Code lookup failed')
 
   userData = yield provider.lookupAccessToken(accessToken)
   if not userData
-    throw new errors.UnprocessableEntity('Token was invalid')
+    throw new errors.UnprocessableEntity('User lookup failed')
     
   identity = {
     provider: provider._id
