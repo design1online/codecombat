@@ -2,7 +2,7 @@ mongoose = require 'mongoose'
 plugins = require '../plugins/plugins'
 log = require 'winston'
 config = require '../../server_config'
-jsonSchema = require '../../app/schemas/models/oauth-provider.schema.coffee'
+jsonSchema = require '../../app/schemas/models/o-auth-provider.schema.coffee'
 co = require 'co'
 
 OAuthProviderSchema = new mongoose.Schema(body: String, {strict: false,read:config.mongo.readpref})
