@@ -658,13 +658,15 @@ describe '/db/prepaid', ->
                 nockDone()
                 done()
 
-    it 'Test for injection', (done) ->
-      loginNewUser (user) ->
-        code = { $exists: true }
-        subscribeWithPrepaid code, (err, res, result) ->
-          expect(err).toBeNull()
-          expect(res.statusCode).not.toEqual(200)
-          done()
+    it 'thwarts query injections', utils.wrap (done) ->
+      user = yield utils.initUser()
+      yield utils.loginUser(user)
+      code = { $exists: true }
+      subscribeWithPrepaidAsync = Promise.promisify(subscribeWithPrepaid)
+      res = yield subscribeWithPrepaidAsync(code)
+      expect(res.statusCode).toBe(422)
+      expect(res.body.message).toBe('You must provide a valid prepaid code.')
+      done()
 
     it 'enforces the maximum number of redeemers in a race condition', utils.wrap (done) ->
       nockDone = yield nockUtils.setupNockAsync 'db-sub-redeem-test-3.json'

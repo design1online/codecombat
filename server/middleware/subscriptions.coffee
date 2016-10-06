@@ -5,8 +5,8 @@ log = require 'winston'
 
 subscribeWithPrepaidCode = wrap (req, res) ->
   { ppc } = req.body
-  if not ppc
-    throw new errors.UnprocessableEntity('You must provide a valid prepaid code')
+  unless ppc and _.isString(ppc)
+    throw new errors.UnprocessableEntity('You must provide a valid prepaid code.')
 
   # Check if code exists and has room for more redeemers
   prepaid = yield Prepaid.findOne({ code: ppc })
