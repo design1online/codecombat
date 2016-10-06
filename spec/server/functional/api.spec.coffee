@@ -137,16 +137,16 @@ describe 'POST /api/users/:handle/prepaids', ->
     [res, body] = yield request.postAsync({url, json, @auth})
     @user = yield User.findById(res.body._id)
     @url = utils.getURL("/api/users/#{@user.id}/prepaids")
+    @endDate = moment().add(12, 'months').toISOString()
+    @json = { @endDate }
     done()
 
   it 'provides the user with premium access until the given endDate, and creates a prepaid', utils.wrap (done) ->
     expect(@user.hasSubscription()).toBe(false)
     t0 = new Date().toISOString()
-    endDate = moment().add(12, 'months').toISOString()
-    json = { endDate }
-    [res, body] = yield request.postAsync({ @url, json, @auth })
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
     t1 = new Date().toISOString()
-    expect(res.body.subscription.ends).toBe(endDate)
+    expect(res.body.subscription.ends).toBe(@endDate)
     expect(res.statusCode).toBe(200)
     prepaid = yield Prepaid.findOne({'redeemers.userID': @user._id})
     expect(prepaid).toBeDefined()
@@ -154,7 +154,52 @@ describe 'POST /api/users/:handle/prepaids', ->
     expect(prepaid.get('redeemers')[0].userID.equals(@user._id)).toBe(true)
     expect(prepaid.get('startDate')).toBeGreaterThan(t0)
     expect(prepaid.get('startDate')).toBeLessThan(t1)
-    expect(prepaid.get('endDate')).toBe(endDate)
+    expect(prepaid.get('endDate')).toBe(@endDate)
     user = yield User.findById(@user.id)
     expect(user.hasSubscription()).toBe(true)
+    done()
+
+  it 'returns 404 if the user is not found', utils.wrap (done) ->
+    url = utils.getURL('/api/users/dne/prepaids')
+    [res, body] = yield request.postAsync({ url, @json, @auth })
+    expect(res.statusCode).toBe(404)
+    done()
+
+  it 'returns 403 if the user was not created by the client', utils.wrap (done) ->
+    yield @user.update({$unset: {clientCreator:1}})
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
+    expect(res.statusCode).toBe(403)
+    done()
+
+  it 'returns 422 if the endDate is not provided or incorrectly formatted', utils.wrap (done) ->
+    json = {}
+    [res, body] = yield request.postAsync({ @url, json, @auth })
+    expect(res.statusCode).toBe(422)
+
+    json = { endDate: '2014-01-01T00:00:00.00Z'}
+    [res, body] = yield request.postAsync({ @url, json, @auth })
+    expect(res.statusCode).toBe(422)
+    
+    done()
+
+  it 'returns 422 if the user already has free premium access', utils.wrap (done) ->
+    yield @user.update({$set: {stripe: {free:true}}})
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
+    expect(res.statusCode).toBe(422)
+    done()
+
+  it 'returns 422 if the user has access beyond the given endDate', utils.wrap (done) ->
+    free = moment().add(13, 'months').toISOString()
+    yield @user.update({$set: {stripe: {free}}})
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
+    expect(res.statusCode).toBe(422)
+    done()
+
+  it 'sets the prepaid startDate to the user\'s old terminal subscription end date if there is one', utils.wrap (done) ->
+    originalFreeUntil = moment().add(6, 'months').toISOString()
+    yield @user.update({$set: {stripe: {free: originalFreeUntil}}})
+    [res, body] = yield request.postAsync({ @url, @json, @auth })
+    expect(res.statusCode).toBe(200)
+    prepaid = yield Prepaid.findOne({'redeemers.userID': @user._id})
+    expect(prepaid.get('startDate')).toBe(originalFreeUntil)
     done()

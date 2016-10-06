@@ -7,6 +7,7 @@ database = require '../commons/database'
 config = require '../../server_config'
 OAuthProvider = require '../models/OAuthProvider'
 Prepaid = require '../models/Prepaid'
+moment = require 'moment'
 
 INCLUDED_PRIVATES = ['email', 'oAuthIdentities']
 DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}\.\d{3}Z$/ # JavaScript Date's toISOString() output
@@ -60,9 +61,9 @@ postUserOAuthIdentity = wrap (req, res) ->
   unless req.client._id.equals(user.get('clientCreator'))
     throw new errors.Forbidden('Must have created the user to perform this action.')
     
-  { provider: providerID, accessToken } = req.body or {}
-  unless providerID and accessToken
-    throw new errors.UnprocessableEntity('Properties "provider" and "accessToken" required.')
+  { provider: providerID, accessToken, code } = req.body or {}
+  unless providerID and (accessToken or code)
+    throw new errors.UnprocessableEntity('Properties "provider" and "accessToken" or "code" required.')
     
   if not database.isID(providerID)
     throw new errors.UnprocessableEntity('"provider" is not a valid id')
