@@ -55,8 +55,9 @@ Returns a [user](#users) with a given ID. `:handle` should be the user's `_id` o
 Adds an OAuth identity to the user, so that they can be logged in with that identity from then on. The token will be used to make a request to the provider's lookup URL, and use the provided `id`.
 
 #### Params
-* `provider`: String. Your OAuth Provider ID.
-* `accessToken`: String. Will be passed through your lookup URL to get the user ID.
+* `provider`: String. Your OAuth Provider ID. Required.
+* `accessToken`: String. Will be passed through your lookup URL to get the user ID. Required if no `code`.
+* `code`: String. Will be passed to the OAuth token endpoint to get a token. Required if no `accessToken`.
 
 #### Example
 
@@ -92,7 +93,8 @@ Logs a user in given the token.
 
 #### Params
 * `provider`: String. Your OAuth Provider ID.
-* `accessToken`: String. Will be passed through your lookup URL to get the user ID.
+* `accessToken`: String. Will be passed through your lookup URL to get the user ID. Required if no `code`.
+* `code`: String. Will be passed through your token URL to get a token. Required if no `accessToken`.
 
 #### Returns
 A redirect to the home page and cookie-setting headers.
